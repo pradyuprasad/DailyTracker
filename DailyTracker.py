@@ -27,6 +27,7 @@ def preprocess_time_string(time_str):
 df[Date] = pd.to_datetime(df[Date])
 df[TotalTime] = pd.to_timedelta(df[TotalTime].apply(lambda td: pd.Timedelta(preprocess_time_string(str(td)))))
 df[TimeStudied] = pd.to_timedelta(df[TimeStudied].apply(lambda td: pd.Timedelta(preprocess_time_string(str(td)))))
+df = df[df[Date] > pd.to_datetime('2024-01-13')]
 def plot_daily_study_time():
     daily_study_time = df.groupby(Date)[TimeStudied].sum()
 
@@ -40,10 +41,12 @@ def plot_daily_study_time():
     plt.title('Total Time Studied Each Day')
     plt.xlabel('Date')
     plt.ylabel('Total Time Studied (Hours)')
-    plt.xticks(rotation=45)  # Rotate the date labels for readability
-    plt.grid(True)
+    plt.axhline(y = 4.0, linestyle='-', label = 'target', color='red')
+    plt.ylim(0, 6.0)
+    plt.xticks(rotation=90)  # Rotate the date labels for readability
     plt.tight_layout()
-
+    plt.legend()
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.show()
 
 
@@ -59,7 +62,7 @@ def plot_average_focus_time():
     plt.figure(figsize=(10, 6))
     plt.bar(sorted_weighted_avg_study_percent.index, sorted_weighted_avg_study_percent, color='skyblue')
 
-    plt.title('Weighted Average Study Time Percentage by Topic')
+    plt.title('Weighted Average Study Time Percentage by Topic (Since college started)')
     plt.xlabel('Topic')
     plt.ylabel('Weighted Average Study Time (%)')
     plt.xticks(rotation=90)  # Rotate the topic labels for readability
@@ -68,4 +71,37 @@ def plot_average_focus_time():
     plt.tight_layout()
 
     plt.show()
+
+def plot_daily_study_time_by_topic():
+    # Grouping the data by Date and Topic and summing up TimeStudied
+    grouped_data = df.groupby([Date, Topic])[TimeStudied].sum().reset_index()
+
+    # Convert 'TimeStudied' from Timedelta to total hours
+    grouped_data[TimeStudied] = grouped_data[TimeStudied].dt.total_seconds() / 3600
+
+    # Pivoting the data for plotting
+    pivot_data = grouped_data.pivot(index=Date, columns=Topic, values=TimeStudied).fillna(0)
+
+    # Create a complete date range for the dataset
+    date_range = pd.date_range(start=pivot_data.index.min(), end=pivot_data.index.max())
+
+    # Reindex the pivot table to include the full date range, filling missing values with 0
+    pivot_data = pivot_data.reindex(date_range, fill_value=0)
+
+    # Format the dates to exclude the time component
+    pivot_data.index = pivot_data.index.date
+
+    # Plotting the stacked bar graph
+    plt.figure(figsize=(10, 6))
+    pivot_data.plot(kind='bar', stacked=True, ax=plt.gca(), legend=False)
+    plt.axhline(y=4.0, linestyle='-', label='target', color='red')
+    plt.title('Daily Study Time by Topic')
+    plt.xlabel('Date')
+    plt.ylabel('Total Time Studied (Hours)')
+    plt.xticks(rotation=90)  # Rotate the date labels for readability
+    plt.legend(title='Topic', loc='upper left', bbox_to_anchor=(1, 1))
+    plt.tight_layout()
+    plt.show()
+
+plot_daily_study_time_by_topic()
 

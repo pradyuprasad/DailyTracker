@@ -231,4 +231,5 @@ def study_time_last_7_days():
     print(sorted_study_time_by_topic)
 
 # Call the function to display the study time in the last 7 days by topic
-plot_daily_study_time_by_topic()
+study_time_last_7_days()
+
